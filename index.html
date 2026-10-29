@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>英语闯关练习</title>
+<style>
+:root{
+  --bg:#eef2ff; --card:#fff; --ink:#1e293b; --muted:#64748b;
+  --primary:#4f46e5; --primary-d:#4338ca; --ok:#16a34a; --ok-bg:#dcfce7;
+  --bad:#dc2626; --bad-bg:#fee2e2; --warn:#f59e0b; --line:#e2e8f0;
+  --shadow:0 6px 18px rgba(30,41,59,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5;
+  min-height:100vh;padding-bottom:24px;
+}
+.wrap{max-width:760px;margin:0 auto;padding:14px}
+.hidden{display:none !important}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+h1{font-size:22px;margin:6px 0 2px;letter-spacing:.5px}
+h2{font-size:17px;margin:0 0 10px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.btn{
+  min-height:50px;padding:0 18px;border-radius:14px;border:2px solid transparent;
+  font-size:16px;font-weight:700;cursor:pointer;background:#e2e8f0;color:var(--ink);
+  transition:transform .06s ease, filter .15s ease;
+}
+.btn:active{transform:scale(.985)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-ghost{background:#fff;border-color:var(--line)}
+.btn-warn{background:#fff7ed;border-color:#fdba74;color:#9a3412}
+.btn-block{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* HUD */
+.hud{
+  position:sticky;top:0;z-index:20;background:rgba(238,242,255,.92);
+  backdrop-filter:blur(6px);padding:8px 0 10px;margin-bottom:6px;
+}
+.hud-inner{
+  display:flex;gap:8px;align-items:center;background:#fff;border-radius:16px;
+  padding:8px 12px;box-shadow:var(--shadow)
+}
+.hud-item{display:flex;flex-direction:column;align-items:center;min-width:56px}
+.hud-k{font-size:11px;color:var(--muted);line-height:1.2}
+.hud-v{font-size:18px;font-weight:800;line-height:1.25}
+.hearts{display:flex;gap:4px;align-items:center;height:22px}
+.heart{width:14px;height:14px;border-radius:50%;background:var(--bad);box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.heart.off{background:#e2e8f0}
+
+/* 导入区 */
+.drop{
+  border:2px dashed #c7d2fe;border-radius:16px;padding:18px;text-align:center;
+  background:#f8faff;transition:background .15s ease,border-color .15s ease;
+}
+.drop.over{background:#eef2ff;border-color:var(--primary)}
+.drop b{color:var(--primary)}
+textarea{
+  width:100%;min-height:92px;border:2px solid var(--line);border-radius:12px;
+  padding:10px;font-size:14px;font-family:inherit;resize:vertical;background:#fff;color:var(--ink);
+}
+select,input[type=range]{font-family:inherit}
+select{min-height:44px;border:2px solid var(--line);border-radius:12px;padding:0 10px;background:#fff;font-size:15px}
+.status{font-size:13px;margin-top:8px;color:var(--muted);white-space:pre-wrap}
+.status.ok{color:var(--ok)}
+.status.bad{color:var(--bad)}
+.preview{display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto;margin-top:8px}
+.pv{font-size:13px;color:#334155;background:#f8fafc;border-radius:8px;padding:5px 8px;display:flex;gap:8px}
+.pv i{color:var(--muted);font-style:normal;min-width:38px}
+
+/* 进度 */
+.progress{height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin:10px 0 4px}
+.progress > div{height:100%;width:0;background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:width .25s ease}
+.qlabel{font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.miniStats{font-size:13px;color:#475569;margin:2px 0 10px;text-align:center;font-weight:600}
+
+/* 题干 */
+.prompt{text-align:center;margin:8px 0 14px}
+.prompt .big{font-size:30px;font-weight:800;letter-spacing:.5px;word-break:break-word}
+.prompt .zh{font-size:26px;font-weight:800}
+.prompt .tip{font-size:13px;color:var(--muted);margin-top:6px}
+.picbox{display:flex;justify-content:center;margin:0 0 10px}
+.qpic{
+  width:168px;height:168px;object-fit:contain;border-radius:18px;background:#fff;
+  border:2px solid var(--line);padding:6px;box-shadow:0 4px 12px rgba(30,41,59,.06)
+}
+.speak-btn{
+  margin-top:10px;min-height:48px;padding:0 20px;border-radius:999px;border:none;
+  background:var(--primary);color:#fff;font-size:16px;font-weight:700;cursor:pointer;
+}
+
+/* 舞台 */
+.stage{min-height:180px;position:relative}
+.tiles{display:grid;grid-template-columns:1fr;gap:10px}
+.tile{
+  min-height:56px;border-radius:14px;border:2px solid var(--line);background:#fff;
+  font-size:18px;font-weight:600;color:var(--ink);cursor:pointer;padding:10px 14px;
+  text-align:center;word-break:break-word;transition:background .12s ease,border-color .12s ease,transform .06s ease;
+}
+.tile:active{transform:scale(.99)}
+.tile.sel{border-color:var(--primary);background:#eef2ff}
+.tile.correct{border-color:var(--ok);background:var(--ok-bg)}
+.tile.wrong{border-color:var(--bad);background:var(--bad-bg);animation:shake .3s}
+.tile.dim{opacity:.35;pointer-events:none}
+.tile.done{background:#f1f5f9;border-color:#cbd5e1;color:#94a3b8;pointer-events:none}
+.tile.lock{pointer-events:none}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.match-col{display:flex;flex-direction:column;gap:10px}
+.match-col .tile{min-height:60px;font-size:16px;display:flex;align-items:center;justify-content:center}
+
+/* 拼写 */
+.slots{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 18px}
+.slot{
+  width:38px;height:48px;border-bottom:4px solid var(--primary);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;
+  color:var(--primary);background:#f8faff;
+}
+.slot.filled{background:#eef2ff}
+.slot.fixed{border-bottom-color:transparent;background:transparent;color:var(--muted)}
+/* 句子填空：整句排开，普通词直接显示，被挖的词占字母格 */
+.slots.sentence{justify-content:flex-start;gap:2px 4px;padding:4px 2px}
+.slots.sentence .slot{width:26px;height:38px;font-size:20px;border-bottom-width:3px}
+.tok{display:flex;align-items:flex-end;font-size:17px;color:var(--ink);line-height:38px}
+.tok.blank-word{display:inline-flex;gap:2px;white-space:nowrap}
+.tok.punct{margin-left:-2px}
+.slot.bad{border-color:var(--bad);color:var(--bad);background:var(--bad-bg)}
+/* 短语里词与词之间的真空白：只给间隔，不画格子 */
+.gap{width:16px;height:48px;flex:0 0 16px}
+.letters{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.letter{
+  width:52px;height:52px;border-radius:12px;border:2px solid var(--line);background:#fff;
+  font-size:22px;font-weight:800;cursor:pointer;color:var(--ink);
+}
+.letter:active{transform:scale(.96)}
+.letter.shake{animation:shake .3s;border-color:var(--bad);color:var(--bad);background:#fff1f2}
+.letter.used{opacity:.25;pointer-events:none}
+
+/* 反馈 */
+.feedback{
+  min-height:28px;text-align:center;font-weight:800;font-size:16px;margin-top:10px;
+}
+.feedback.ok{color:var(--ok)}
+.feedback.bad{color:var(--bad)}
+.float{
+  position:absolute;left:50%;top:8px;transform:translateX(-50%);
+  font-size:24px;font-weight:900;color:var(--ok);pointer-events:none;
+  animation:floatUp .9s ease forwards;
+}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,10px)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-40px)}}
+
+/* 结算 */
+.big-title{font-size:28px;font-weight:900;text-align:center;margin:8px 0 4px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.stat{background:#f8fafc;border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--muted)}
+.best{text-align:center;color:var(--muted);font-size:13px;margin-top:6px}
+.badge{display:inline-block;background:#eef2ff;color:var(--primary);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header id="hud" class="hud hidden">
+    <div class="hud-inner">
+      <div class="hud-item"><span class="hud-k">关卡</span><span class="hud-v" id="hudLevel">1</span></div>
+      <div class="hud-item"><span class="hud-k">得分</span><span class="hud-v" id="hudScore">0</span></div>
+      <div class="hud-item"><span class="hud-k">连对</span><span class="hud-v" id="hudCombo">0</span></div>
+      <div class="spacer"></div>
+      <div class="hud-item"><span class="hud-k">生命</span><span class="hearts" id="hudHearts"></span></div>
+    </div>
+  </header>
+
+  <!-- ============ 首页 ============ -->
+  <section id="scr-home" class="screen active">
+    <div class="card">
+      <h1>英语闯关练习</h1>
+      <p class="sub">导入自己的单词表，五种题型闯七关。答对得分，答错扣分扣命。</p>
+      <div class="row">
+        <button class="btn btn-primary btn-block" id="btnStart">开始闯关</button>
+      </div>
+      <div class="best" id="bestLine">最高分 0</div>
+    </div>
+
+    <div class="card">
+      <h2>题库</h2>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn btn-primary" id="btnPickFolder" style="flex:1">选择题库文件夹（连图片一起）</button>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn btn-ghost" id="btnPickTxt">只选 txt 文件</button>
+        <button class="btn btn-ghost" id="btnPickImg">单独选图片</button>
+        <div class="spacer"></div>
+        <span class="badge" id="imgBadge">图片 0 张</span>
+      </div>
+      <div class="drop" id="dropZone">
+        <div>也可以把文件直接拖到这里</div>
+        <div class="sub" style="margin:6px 0 0">题库每行一条：英文, 中文；配套图片命名成单词.png（bull.png），和 txt 放同一个文件夹</div>
+        <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden">
+        <input type="file" id="fileInput" accept=".txt,.csv,.md,text/plain" class="hidden">
+        <input type="file" id="imgInput" accept="image/*" multiple class="hidden">
+      </div>
+      <div class="row" style="margin-top:12px">
+        <textarea id="pasteBox" placeholder="也可以直接粘贴，例如：&#10;bull, 公牛&#10;play football, 踢足球"></textarea>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-ghost" id="btnImportPaste">导入粘贴内容</button>
+        <button class="btn btn-ghost" id="btnUseDefault">用内置题库</button>
+        <div class="spacer"></div>
+        <span class="badge" id="countBadge">0 条</span>
+      </div>
+      <div class="status" id="importStatus"></div>
+      <div class="preview" id="previewList"></div>
+    </div>
+
+    <div class="card">
+      <h2>设置</h2>
+      <div class="row" style="margin-bottom:12px">
+        <label for="rateRange" style="min-width:76px">语速 <b id="rateVal">0.85</b></label>
+        <input type="range" id="rateRange" min="0.6" max="1.2" step="0.05" value="0.85" style="flex:1">
+      </div>
+      <div class="row">
+        <label for="perLevel">每关题数</label>
+        <select id="perLevel">
+          <option value="8">8 题</option>
+          <option value="10">10 题</option>
+          <option value="12">12 题</option>
+          <option value="15" selected>15 题</option>
+        </select>
+        <span style="width:12px"></span>
+        <label for="heartsSel">初始生命</label>
+        <select id="heartsSel">
+          <option value="3">3 条</option>
+          <option value="5" selected>5 条</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label for="picSel">看图提示</label>
+        <select id="picSel">
+          <option value="all" selected>所有题型（听音题除外）</option>
+          <option value="hint">只拼写和翻译题</option>
+          <option value="off">关闭</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label for="voiceSel">音色</label>
+        <select id="voiceSel" style="flex:1;min-width:0"></select>
+        <button class="btn btn-ghost" id="btnVoiceTest" style="flex:0 0 auto;min-height:40px;padding:0 14px">试听</button>
+      </div>
+      <p class="sub" id="voiceHint" style="margin-top:6px"></p>
+      <p class="sub" style="margin-top:10px">语音用浏览器自带发音，建议用 Chrome 或 Edge 打开；没声音就点题目里的「播放」按钮。</p>
+    </div>
+  </section>
+
+  <!-- ============ 游戏 ============ -->
+  <section id="scr-game" class="screen">
+    <div class="card">
+      <div class="progress"><div id="progBar"></div></div>
+      <div class="qlabel"><span id="qLabel">第 1 题 / 共 8 题</span><span id="modeLabel"></span></div>
+      <div class="miniStats" id="miniStats"></div>
+      <div class="prompt" id="prompt"></div>
+      <div class="stage" id="stage"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn btn-ghost" id="btnHint">提示 −10 分</button>
+        <button class="btn btn-ghost" id="btnReplay">再听一遍</button>
+        <div class="spacer"></div>
+        <button class="btn btn-warn" id="btnGiveUp">放弃本关</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 过关 ============ -->
+  <section id="scr-levelup" class="screen">
+    <div class="card">
+      <div class="big-title" id="luTitle">过关</div>
+      <p class="sub" style="text-align:center" id="luSub"></p>
+      <div class="stat-grid" id="luStats"></div>
+      <button class="btn btn-primary btn-block" id="btnNextLevel">进入下一关</button>
+    </div>
+  </section>
+
+  <!-- ============ 失败 ============ -->
+  <section id="scr-over" class="screen">
+    <div class="card">
+      <div class="big-title" style="color:var(--bad)">闯关失败</div>
+      <p class="sub" style="text-align:center" id="overSub">生命用完了</p>
+      <div class="stat-grid" id="overStats"></div>
+      <div class="row">
+        <button class="btn btn-primary" id="btnRetryLevel" style="flex:1">重来本关</button>
+        <button class="btn btn-ghost" id="btnBackHome" style="flex:1">回到首页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 通关 ============ -->
+  <section id="scr-clear" class="screen">
+    <div class="card">
+      <div class="big-title" style="color:var(--ok)">全部通关</div>
+      <p class="sub" style="text-align:center" id="clearSub">七关全过，厉害</p>
+      <div class="stat-grid" id="clearStats"></div>
+      <button class="btn btn-primary btn-block" id="btnRestartAll">再玩一次</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   0. 基础工具
+   ========================================================= */
+var $ = function(id){ return document.getElementById(id); };
+function shuffle(a){
+  var b = a.slice();
+  for(var i=b.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; }
+  return b;
+}
+function sample(a,n){ return shuffle(a).slice(0,n); }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+var CJK = /[\u4e00-\u9fa5]/;
+var LET = /[A-Za-z]/;
+
+/* =========================================================
+   1. 音效（WebAudio，无外部文件）
+   ========================================================= */
+var AC = null;
+function ac(){
+  if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } }
+  if(AC && AC.state==='suspended'){ try{ AC.resume(); }catch(e){} }
+  return AC;
+}
+function beep(freq,dur,type,vol,delay){
+  var c=ac(); if(!c) return;
+  try{
+    var t0=c.currentTime+(delay||0);
+    var o=c.createOscillator(), g=c.createGain();
+    o.type=type||'sine'; o.frequency.value=freq;
+    o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(vol||0.08,t0);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.start(t0); o.stop(t0+dur+0.02);
+  }catch(e){}
+}
+var SFX = {
+  ok:  function(){ beep(880,0.12,'sine',0.10); beep(1320,0.16,'sine',0.09,0.10); },
+  bad: function(){ beep(200,0.22,'sawtooth',0.10); beep(150,0.24,'sawtooth',0.09,0.08); },
+  level:function(){ [660,880,1170,1560].forEach(function(f,i){ beep(f,0.16,'sine',0.10,i*0.11); }); },
+  over:function(){ [440,330,247].forEach(function(f,i){ beep(f,0.30,'triangle',0.11,i*0.16); }); },
+  tap: function(){ beep(600,0.05,'sine',0.05); }
+};
+
+/* =========================================================
+   2. 语音（照参考文件：speechSynthesis + 队列 + 兜底超时）
+   ========================================================= */
+var TTS = {
+  voice:null, queue:[], speaking:false, guard:null, log:[], rate:0.85,
+  supported: !!(window.speechSynthesis && window.SpeechSynthesisUtterance),
+  pick:function(){
+    if(!this.supported) return;
+    var vs = window.speechSynthesis.getVoices()||[];
+    // 用户选过的音色优先（voiceURI 是各浏览器唯一标识）
+    if(this.voiceURI){
+      var hit=vs.filter(function(v){ return v.voiceURI===this.voiceURI; }, this)[0];
+      if(hit){ this.voice=hit; return; }
+    }
+    this.voice = vs.filter(function(v){ return /^en[-_]US/i.test(v.lang); })[0]
+              || vs.filter(function(v){ return /^en[-_]/i.test(v.lang); })[0]
+              || null;
+  },
+  init:function(){
+    if(!this.supported) return;
+    var self=this;
+    if(window.G && G.settings) this.voiceURI=G.settings.voiceURI||'';
+    this.pick();
+    window.speechSynthesis.onvoiceschanged = function(){
+      self.pick();
+      if(typeof fillVoices==='function') fillVoices();
+    };
+  },
+  say:function(text,rate,force){
+    if(!this.supported || !text) return;
+    if(!force){
+      if(this.speaking && this.cur===text) return;
+      for(var i=0;i<this.queue.length;i++){ if(this.queue[i].text===text) return; }
+    }
+    this.queue.push({text:text, rate:rate||this.rate});
+    this.process();
+  },
+  cur:'', cancelledAt:0, gen:0, warmed:false,
+  /* 预热：首次交互时先播一个静音空格，把音频管线叫醒。
+     Chrome 上整页第一次 speak 常常吞掉开头半个音节，预热能吃掉这个坑。 */
+  warmup:function(){
+    if(!this.supported || this.warmed) return;
+    this.warmed=true;
+    try{
+      var u=new SpeechSynthesisUtterance(' ');
+      u.lang='en-US'; u.volume=0; u.rate=1;
+      if(this.voice) u.voice=this.voice;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  },
+  process:function(){
+    if(this.speaking) return;
+    var job=this.queue.shift();
+    if(!job) return;
+    var self=this;
+    var myGen=this.gen;
+    this.speaking=true; this.cur=job.text;
+    this.log.push(job.text);
+    if(this.log.length>300) this.log.shift();
+    var finished=false, fallback=null;
+    var done=function(){
+      if(finished) return;
+      finished=true;
+      self.speaking=false; self.cur='';
+      if(fallback){ clearTimeout(fallback); fallback=null; }
+      setTimeout(function(){ self.process(); },160);
+    };
+    /* 三招一起治「首音听不清」：
+       ① cancel() 之后立刻 speak 会吞开头 → 至少隔 200ms 再说
+       ② 和答对音效挤在同一时刻会抢音频输出 → 留 120ms 提前量
+       ③ 文本前补一个空格，多数引擎会当轻微停顿，首音更完整 */
+    var wait=Math.max(120, 200-(Date.now()-this.cancelledAt));
+    setTimeout(function(){
+      if(finished || myGen!==self.gen) return;
+      try{
+        var u=new SpeechSynthesisUtterance(' '+job.text);
+        u.lang='en-US'; u.rate=job.rate; u.pitch=1.05;
+        if(self.voice) u.voice=self.voice;
+        u.onend=done; u.onerror=done;
+        window.speechSynthesis.speak(u);
+        fallback=setTimeout(done, Math.max(2400, job.text.length*160+1400));
+      }catch(e){ done(); }
+    }, wait);
+  },
+  stop:function(){
+    this.gen++;
+    this.cancelledAt=Date.now();
+    this.queue=[]; this.speaking=false; this.cur='';
+    if(this.supported){ try{ window.speechSynthesis.cancel(); }catch(e){} }
+  }
+};
+
+/* =========================================================
+   3. 题库解析
+   ========================================================= */
+function splitPair(line){
+  var i,j;
+  // ① 英文逗号/分号，且后面紧跟中文（避免把 "Yes, they are." 从中间劈开）
+  for(i=0;i<line.length;i++){
+    if(line[i]===','||line[i]===';'){
+      j=i+1; while(j<line.length && line[j]===' ') j++;
+      if(CJK.test(line[j]||'')) return [line.slice(0,i).trim(), line.slice(j).trim()];
+    }
+  }
+  // ② 全角分隔符 / 破折号 / 制表符
+  var seps=['，','；','—','–','\t'];
+  for(var k=0;k<seps.length;k++){
+    var idx=line.indexOf(seps[k]);
+    if(idx>0) return [line.slice(0,idx).trim(), line.slice(idx+seps[k].length).trim()];
+  }
+  // ③ 空格 - 空格
+  var m=line.match(/^(.+?)\s+-\s+(.+)$/);
+  if(m) return [m[1].trim(), m[2].trim()];
+  return null;
+}
+
+function parseText(raw){
+  var items=[], bad=[], seen={};
+  var text=String(raw||'').replace(/^\uFEFF/,'');
+  var lines=text.split(/\r?\n/);
+  for(var n=0;n<lines.length;n++){
+    var line=(lines[n]||'').trim();
+    if(!line) continue;
+    if(line.charAt(0)==='#') continue;
+    if(/^第[一二三四五六七八九十]+部分/.test(line)) continue;
+    if(!LET.test(line)) continue;
+    var pair=splitPair(line);
+    if(!pair){ bad.push(line); continue; }
+    var a=pair[0], b=pair[1];
+    var aEn=LET.test(a), bEn=LET.test(b);
+    var en, zh;
+    if(!aEn && bEn){ en=b; zh=a; }
+    else if(aEn && !bEn){ en=a; zh=b; }
+    else if(CJK.test(a) && !CJK.test(b)){ en=b; zh=a; }
+    else { en=a; zh=b; }
+    en=en.replace(/\s+/g,' ').trim();
+    zh=zh.replace(/\s+/g,' ').trim();
+    if(!en || !zh || !LET.test(en)){ bad.push(line); continue; }
+    var key=(en+'|'+zh).toLowerCase();
+    if(seen[key]) continue;
+    seen[key]=1;
+    items.push({en:en, zh:zh});
+  }
+  return {items:items, bad:bad};
+}
+
+/* =========================================================
+   3.5 配图：从同一个文件夹里按「单词.png」匹配
+   浏览器不许网页自己去翻同目录文件，所以必须由用户「选文件夹」，
+   由文件夹选择器把 txt 和图片一起交过来。
+   ========================================================= */
+var IMG = { map:{}, count:0 };   // 规范化单词 -> objectURL
+
+function normKey(s){
+  return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+}
+function addImageFiles(list){
+  var added=0;
+  Array.prototype.forEach.call(list||[], function(f){
+    var byType=/^image\//.test(f.type||'');
+    var byExt=/\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(f.name||'');
+    if(!byType && !byExt) return;
+    var key=normKey((f.name||'').replace(/\.[^.]+$/,''));
+    if(!key || IMG.map[key]) return;        // 同名先到先得
+    try{ IMG.map[key]=URL.createObjectURL(f); }catch(e){ return; }
+    added++;
+  });
+  IMG.count=Object.keys(IMG.map).length;
+  var b=$('imgBadge'); if(b) b.textContent='图片 '+IMG.count+' 张';
+  return added;
+}
+function clearImages(){
+  Object.keys(IMG.map).forEach(function(k){
+    try{ URL.revokeObjectURL(IMG.map[k]); }catch(e){}
+  });
+  IMG.map={}; IMG.count=0;
+  var b=$('imgBadge'); if(b) b.textContent='图片 0 张';
+}
+/* 只给单个单词找图：短语、句子一律不配图 */
+function pickImageFor(word){
+  if(!word) return null;
+  if(word.indexOf(' ')>-1) return null;
+  var k=normKey(word);
+  if(!k) return null;
+  if(IMG.map[k]) return IMG.map[k];
+  // 允许 bull_v1.png / 01-bull.png 这类带前后缀的命名。
+  // 注意：lastIndexOf 找不到会返回 -1，不能直接跟 len-k.length 比，
+  // 否则 -1 === -1 会把「查不到」误判成「匹配上」。
+  var keys=Object.keys(IMG.map);
+  for(var i=0;i<keys.length;i++){
+    var key=keys[i];
+    if(key.indexOf(k)===0) return IMG.map[key];
+    if(key.length>k.length && key.slice(key.length-k.length)===k) return IMG.map[key];
+  }
+  return null;
+}
+/* 把图挂到题干上方；哪些题型显示由设置决定 */
+function attachPicture(q){
+  var mode=G.settings.showPic||'all';
+  if(mode==='off') return;
+  if(!q || !q.item) return;
+  if(q.mode==='listen') return;     // 听音题给图就等于把答案摆出来了
+  if(mode==='hint' && ['spell','c2e','sfill'].indexOf(q.mode)<0) return;
+  var url=pickImageFor(q.item.en);
+  if(!url) return;
+  var p=$('prompt'); if(!p) return;
+  var wrap=document.createElement('div'); wrap.className='picbox';
+  var img=document.createElement('img');
+  img.className='qpic'; img.src=url; img.alt='';
+  img.onerror=function(){ wrap.remove(); };
+  wrap.appendChild(img);
+  p.insertBefore(wrap, p.firstChild);
+}
+
+/* =========================================================
+   4. 内置示例题库
+   ========================================================= */
+var DEFAULT_RAW = [
+'bull, 公牛','cow, 奶牛','sheep, 绵羊','goat, 山羊','bird, 鸟','horse, 马',
+'donkey, 驴子','duck, 鸭子','egg, 鸡蛋','farm, 农场','chicken, 鸡','lamb, 小羔羊',
+'skate, 滑冰','skateboard, 滑板','ski, 滑雪','sky, 天空','spaceship, 宇宙飞船',
+'spoon, 勺子','spade, 铁锹','spin, 快速旋转','cricket, 板球','frisbee, 飞盘',
+'play football, 踢足球','on the spot, 在原地','play basketball, 打篮球',
+'play frisbee, 玩飞盘','throw the frisbee, 扔飞盘','catch the frisbee, 接飞盘',
+'play volleyball, 打排球','play tennis, 打网球','play badminton, 打羽毛球',
+'play baseball, 打棒球','play golf, 打高尔夫球',
+"This is my uncle's farm., 这是我叔叔的农场。",
+'Look! These are chickens., 看！这些是小鸡。',
+"Those aren't sheep., 那些不是绵羊。",
+'Those are lambs., 那些是小羔羊。',
+'Are these cows?, 这些是奶牛吗？',
+'Yes, they are., 是的，它们是。',
+'Are those donkeys?, 那些是驴吗？',
+"No, they aren't., 不，它们不是。",
+"They're bulls!, 它们是公牛！",
+'Help!, 救命！',
+'Look over there!, 看那边！',
+"Let's skip with a skipping rope., 让我们用跳绳跳吧。",
+"Let's fly in the sky in a spaceship!, 让我们乘坐宇宙飞船在天空飞行！",
+"Let's eat with a spoon., 让我们用勺子吃饭。",
+"Let's dig with a spade., 让我们用铁锹挖土。",
+'Whose frisbee is it?, 这个飞盘是谁的？',
+"It's Pop's., 是 Pop 的。",
+'Thank you for this frisbee and football., 谢谢你们的飞盘和足球。'
+].join('\n');
+
+/* =========================================================
+   5. 状态与存储
+   ========================================================= */
+var SAVE_KEY='eng_quest_v1';
+var MAX_LEVEL=7;
+
+var G = {
+  items:[],
+  settings:{ rate:0.85, perLevel:15, hearts:5, showPic:'all', voiceURI:'' },
+  best:0,
+  retry:{},          // 本单次内的错题：en -> 错了几次，连对够次数才移出
+  retryOk:{},        // en -> 当前连对了几次
+  level:1,
+  score:0,
+  combo:0,
+  maxCombo:0,
+  hearts:5,
+  heartsMax:5,
+  queue:[],
+  qi:0,
+  right:0,
+  wrong:0,
+  levelStartScore:0,
+  locked:false,
+  q:null,
+  screen:'home'
+};
+
+function save(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      items:G.items, settings:G.settings, best:G.best
+    }));
+  }catch(e){}
+}
+function load(){
+  try{
+    var raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    var d=JSON.parse(raw);
+    if(d.items && d.items.length){ G.items=d.items; }
+    if(d.settings) G.settings=Object.assign(G.settings,d.settings);
+    if(typeof d.best==='number') G.best=d.best;
+    G.heartsMax=G.settings.hearts; G.hearts=G.settings.hearts;
+    TTS.rate=G.settings.rate;
+    TTS.voiceURI=G.settings.voiceURI||'';
+    if(TTS.pick) TTS.pick();
+    // 老存档里看图提示默认是「只拼写和翻译」，这一版改成默认全显示，迁移一次
+    if(!G.settings.picMigrated){ G.settings.showPic='all'; G.settings.picMigrated=true; save(); }
+    // 每关题数改成 15，老存档也迁移一次（之后手动改不会被覆盖）
+    if(!G.settings.perMigrated){ G.settings.perLevel=15; G.settings.perMigrated=true; save(); }
+    return true;
+  }catch(e){ return false; }
+}
+
+/* =========================================================
+   6. 界面切换
+   ========================================================= */
+var SCREENS=['home','game','levelup','over','clear'];
+function show(name){
+  G.screen=name;
+  SCREENS.forEach(function(s){
+    var node=$('scr-'+s);
+    if(node) node.classList.toggle('active', s===name);
+  });
+  $('hud').classList.toggle('hidden', name==='home');
+  window.scrollTo(0,0);
+  if(name==='home') paintHome();
+  if(name!=='game') TTS.stop();
+}
+
+function paintHUD(){
+  $('hudLevel').textContent=G.level+'/'+MAX_LEVEL;
+  $('hudScore').textContent=G.score;
+  $('hudCombo').textContent=G.combo;
+  var box=$('hudHearts'); box.innerHTML='';
+  for(var i=0;i<G.heartsMax;i++){
+    var d=document.createElement('div');
+    d.className='heart'+(i<G.hearts?'':' off');
+    box.appendChild(d);
+  }
+  paintMini();
+}
+
+/* 提示扣分阶梯：同题第一次 −10，之后每用一次翻倍（10 / 20 / 40 / 80 …）
+   分数不够照扣，允许扣成负数 —— 提示是有代价的，用得越多越贵 */
+function hintCost(used){
+  return 10 * Math.pow(2, used||0);
+}
+function paintHintBtn(){
+  var btn=$('btnHint');
+  if(!btn) return;
+  btn.textContent='提示 −'+hintCost(G.hintCount)+' 分';
+}
+
+/* 单次统计：这一局从点「开始闯关」算起，重开就清零 */
+function answeredCount(){ return G.right+G.wrong; }
+function rateText(){
+  var n=answeredCount();
+  if(!n) return '—';
+  return Math.round(G.right/n*100)+'%';
+}
+function paintMini(){
+  var n=answeredCount();
+  var r=retryCount();
+  var el=$('miniStats');
+  if(!el) return;
+  var txt='已答 '+n+' 题 · 错 '+G.wrong+' 题 · 正确率 '+rateText();
+  if(r) txt+=' · 错题待复习 '+r+' 个';
+  el.textContent=txt;
+}
+
+/* 试听：念一句带单词的英文，让家长听音色和语速 */
+function previewVoice(){
+  TTS.warmup();
+  TTS.stop();
+  TTS.say('Hello! This is a bull. Bull, cow, sheep.', null, true);
+}
+
+/* 音色下拉：把浏览器报出来的英文音色全列出来，选过就记住 */
+function fillVoices(){
+  var sel=$('voiceSel');
+  if(!sel) return;
+  var supported=!!(window.speechSynthesis && window.SpeechSynthesisUtterance);
+  var vs=supported ? (window.speechSynthesis.getVoices()||[]) : [];
+  var en=vs.filter(function(v){ return /^en/i.test(v.lang); });
+  var list=en.length ? en : vs;   // 没有英文音色就退而列全部
+  var cur=G.settings.voiceURI||'';
+
+  sel.innerHTML='';
+  var auto=document.createElement('option');
+  auto.value='';
+  auto.textContent=list.length ? '自动（推荐）' : '没检测到音色';
+  sel.appendChild(auto);
+
+  list.forEach(function(v){
+    var o=document.createElement('option');
+    o.value=v.voiceURI;
+    o.textContent=v.name+' · '+v.lang+(v.localService?'':' · 在线');
+    sel.appendChild(o);
+  });
+
+  var has=false;
+  list.forEach(function(v){ if(v.voiceURI===cur) has=true; });
+  sel.value = has ? cur : '';
+
+  var hint=$('voiceHint');
+  if(hint){
+    if(!supported){
+      hint.textContent='这个浏览器不支持语音合成，换 Chrome 或 Edge。';
+    }else if(!list.length){
+      hint.textContent='浏览器还没报出音色（Chrome 有时要等一两秒），或者系统没装英文语音包。点「试听」看看有没有声音。';
+    }else{
+      var nat=list.filter(function(v){ return !v.localService; }).length;
+      hint.textContent='检测到 '+list.length+' 个音色'+(nat?('，其中 '+nat+' 个是在线自然语音'):'')
+        +'。选完会自动试听一遍，也可以点「试听」再听。';
+    }
+  }
+}
+
+function paintHome(){
+  var badge=$('countBadge'); if(badge) badge.textContent=G.items.length+' 条';
+  var best=$('bestLine'); if(best) best.textContent='最高分 '+G.best;
+  var pv=$('previewList');
+  if(pv){
+    pv.innerHTML='';
+    G.items.slice(0,6).forEach(function(it,i){
+      var d=document.createElement('div'); d.className='pv';
+      d.innerHTML='<i>'+(i+1)+'</i><span>'+esc(it.en)+'</span><span style="color:#94a3b8">'+esc(it.zh)+'</span>';
+      pv.appendChild(d);
+    });
+    if(G.items.length>6){
+      var more=document.createElement('div'); more.className='pv';
+      more.innerHTML='<i></i><span style="color:#94a3b8">…… 还有 '+(G.items.length-6)+' 条</span>';
+      pv.appendChild(more);
+    }
+  }
+  $('rateRange').value=G.settings.rate;
+  $('rateVal').textContent=G.settings.rate.toFixed(2);
+  $('perLevel').value=String(G.settings.perLevel);
+  $('heartsSel').value=String(G.settings.hearts);
+  $('picSel').value=G.settings.showPic||'hint';
+  fillVoices();
+  var ib=$('imgBadge'); if(ib) ib.textContent='图片 '+IMG.count+' 张';
+}
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+/* =========================================================
+   7. 出题
+   ========================================================= */
+function spellable(items){
+  return items.filter(function(it){
+    return /^[A-Za-z][A-Za-z' -]*$/.test(it.en) && it.en.length>=3 && it.en.length<=14;
+  });
+}
+/* 关卡递进（2026-10-25 按需求定版）：先把图和词对上，再慢慢挖空。
+   1 认词    ：全部是带图的选择题 + 连线，一个字母都不用填
+   2 部分填写：混入拼写题，每个词只缺 1~2 个字母
+   3 部分填写 + 听音：拼写仍只缺 1~2 个，加听音选词
+   4 半空    ：单词缺一半字母；句子开始挖关键词（挖 1 个）
+   5 半空 + 句子：单词缺一半；句子挖 1~2 个关键词；保留连线
+   6 全空    ：单词所有字母自己填；句子挖 2 个关键词
+   7 默写关  ：单词全空；句子挖 2/3 的关键词
+   题库里没有可拼的条目时，拼写题自动降级成选择题。 */
+var LEVEL_TABLE={
+  1:['c2e','match','e2c','c2e','match','c2e','e2c','c2e'],
+  2:['c2e','spell','e2c','spell','match','c2e','spell','e2c'],
+  3:['c2e','spell','listen','spell','match','e2c','spell','c2e'],
+  4:['spell','sfill','spell','c2e','sfill','spell','listen','spell'],
+  5:['sfill','spell','spell','listen','sfill','c2e','spell','match'],
+  6:['spell','sfill','spell','spell','sfill','spell','listen','spell'],
+  7:['spell','sfill','spell','spell','sfill','spell','sfill','spell']
+};
+function planLevel(lv){
+  var n=G.settings.perLevel;
+  var canSpell = spellable(G.items).length>=3;
+  var hasSent = G.items.some(function(it){ return !canSpellItem(it); });
+  var pick=function(s){
+    if(s==='spell' && !canSpell) return 'c2e';
+    if(s==='sfill' && !hasSent) return canSpell ? 'spell' : 'c2e';
+    return s;
+  };
+  var t=LEVEL_TABLE[lv] || LEVEL_TABLE[7];
+  var seq=[];
+  for(var i=0;i<n;i++) seq.push({mode: pick(t[i%t.length])});
+  return seq;
+}
+
+/* 每个词缺几个字母：第 1 关不填字，2~3 关缺 1~2 个，4~5 关缺一半，6 关起全填 */
+function blankCountFor(word, lv){
+  var L=(word.match(/[A-Za-z]/g)||[]).length;
+  if(L<=2) return 1;
+  var n;
+  if(lv<=1) n=1;
+  else if(lv<=3) n=(L<=5 ? 1 : 2);
+  else if(lv<=5) n=Math.ceil(L/2);
+  else n=L;
+  n=Math.max(1, Math.min(n, L));
+  return n;
+}
+
+/* 句子里挑「关键词」：去掉 the/is/are 这类虚词、去掉太短的词 */
+var STOP_WORDS={a:1,an:1,the:1,is:1,am:1,are:1,was:1,were:1,be:1,been:1,do:1,does:1,did:1,
+  can:1,could:1,will:1,would:1,shall:1,should:1,may:1,might:1,must:1,to:1,of:1,in:1,on:1,
+  at:1,for:1,with:1,from:1,by:1,as:1,and:1,or:1,but:1,so:1,if:1,then:1,than:1,that:1,
+  this:1,these:1,those:1,it:1,its:1,my:1,your:1,his:1,her:1,their:1,our:1,we:1,you:1,
+  they:1,he:1,she:1,i:1,me:1,us:1,them:1,him:1,not:1,no:1,yes:1,here:1,there:1,what:1,
+  who:1,how:1,when:1,where:1,up:1,down:1,out:1,off:1,very:1,too:1,also:1,have:1,has:1,had:1};
+function keyWordsOf(s){
+  var toks=String(s).match(/[A-Za-z][A-Za-z'’\-]*/g)||[];
+  var keys=[];
+  toks.forEach(function(w){
+    var lw=w.toLowerCase().replace(/['’]s$/,'');
+    if(lw.length<3) return;
+    if(STOP_WORDS[lw]) return;
+    if(keys.indexOf(w)<0) keys.push(w);
+  });
+  return keys;
+}
+
+function pickDistractors(item, field, n, pool){
+  // 干扰项优先选「形状相同」的：单词配单词、短语配短语、句子配句子，
+  // 否则一道题里混进长句子或单字，答案一眼就能猜出来
+  var shape = function(s){
+    var w = s.trim().split(/\s+/).length;
+    return w === 1 ? 'word' : (w <= 4 ? 'phrase' : 'sentence');
+  };
+  var key = shape(item[field]);
+  var same = pool.filter(function(x){ return x[field] !== item[field] && shape(x[field]) === key; });
+  var diff = pool.filter(function(x){ return x[field] !== item[field] && shape(x[field]) !== key; });
+  var out = sample(same, Math.min(n, same.length));
+  if(out.length < n) out = out.concat(sample(diff, n - out.length));
+  return out;
+}
+
+var MODE_NAME={ match:'连线配对', c2e:'中译英', e2c:'英译中', listen:'听音选词', spell:'补全单词', sfill:'句子填空' };
+
+/* =========================================================
+   8. 渲染题目
+   ========================================================= */
+function renderQuestion(){
+  G.locked=false;
+  var qd=G.queue[G.qi];
+  var q={mode:qd.mode, hintUsed:false, item:null, resolved:false};
+  G.q=q;
+
+  $('feedback').textContent='';
+  $('feedback').className='feedback';
+  $('modeLabel').textContent=MODE_NAME[q.mode]||'';
+  $('qLabel').textContent='第 '+(G.qi+1)+' 题 / 共 '+G.queue.length+' 题';
+  $('progBar').style.width=Math.round((G.qi/G.queue.length)*100)+'%';
+  $('btnHint').disabled=false;
+  $('btnHint').style.visibility=(q.mode==='match')?'visible':'visible';
+  paintHintBtn();
+  paintHUD();
+
+  var stage=$('stage'), prompt=$('prompt');
+  stage.innerHTML=''; prompt.innerHTML='';
+
+  if(q.mode==='match') return renderMatch(q,prompt,stage);
+  if(q.mode==='c2e')   return renderChoice(q,prompt,stage,'c2e');
+  if(q.mode==='e2c')   return renderChoice(q,prompt,stage,'e2c');
+  if(q.mode==='listen')return renderChoice(q,prompt,stage,'listen');
+  if(q.mode==='spell') return renderSpell(q,prompt,stage);
+  if(q.mode==='sfill') return renderSFill(q,prompt,stage);
+}
+
+/* --- 连线 --- */
+function renderMatch(q,prompt,stage){
+  var need=Math.min(4,G.items.length);
+  // 连线也从袋子里取，保证这几个词这一局没考过
+  var pairs=[];
+  // 连线优先用句子/短语（练读懂），实在不够再拿单词
+  var takeShort=function(){
+    for(var j=0;j<BAG_OTHER.length;j++){ if(BAG_OTHER[j].en.length<=32) return BAG_OTHER.splice(j,1)[0]; }
+    for(var i=0;i<BAG_SPELL.length;i++){ if(BAG_SPELL[i].en.length<=24) return BAG_SPELL.splice(i,1)[0]; }
+    return null;
+  };
+  for(var pi=0; pi<need; pi++){
+    var got=takeShort();
+    if(!got){ bagReset(); got=takeShort(); }
+    if(!got) break;
+    pairs.push(got);
+  }
+  if(!pairs.length) pairs=sample(G.items, need);
+  q.pairs=pairs;
+  q.matched=0;
+  q.matchWrong=0;
+
+  prompt.innerHTML='<div class="tip">把左边的英文和右边的中文配对，全部配完就过关</div>';
+
+  var left=sample(pairs.map(function(p,i){ return {i:i,text:p.en}; }),pairs.length);
+  var right=sample(pairs.map(function(p,i){ return {i:i,text:p.zh}; }),pairs.length);
+
+  var grid=document.createElement('div'); grid.className='match-grid';
+  var colL=document.createElement('div'); colL.className='match-col';
+  var colR=document.createElement('div'); colR.className='match-col';
+  grid.appendChild(colL); grid.appendChild(colR);
+  stage.appendChild(grid);
+
+  var selLeft=null;
+
+  function mkTile(entry, side){
+    var b=document.createElement('button');
+    b.className='tile'; b.textContent=entry.text;
+    b.setAttribute('data-i',entry.i); b.setAttribute('data-side',side);
+    b.addEventListener('click',function(){
+      if(G.locked || b.classList.contains('done')) return;
+      SFX.tap();
+      if(side==='L'){
+        if(selLeft) selLeft.classList.remove('sel');
+        selLeft=b; b.classList.add('sel');
+        TTS.say(entry.text);
+      }else{
+        if(!selLeft){ feedback('先点左边的一个英文', 'bad', 1200); return; }
+        var li=parseInt(selLeft.getAttribute('data-i'),10);
+        if(li===entry.i){
+          selLeft.classList.remove('sel');
+          selLeft.classList.add('done');
+          b.classList.add('done');
+          selLeft=null;
+          q.matched++;
+          q.lastPairEn=pairs[entry.i].en;
+          G.score+=8; G.combo++; G.maxCombo=Math.max(G.maxCombo,G.combo);
+          SFX.ok(); floatText('+8'); paintHUD();
+          if(q.matched>=q.pairs.length){ resolve(true, 0); }
+        }else{
+          b.classList.add('wrong');
+          setTimeout(function(){ b.classList.remove('wrong'); },380);
+          selLeft.classList.remove('sel'); selLeft=null;
+          q.matchWrong++;
+          G.wrong++;
+          var alive=deduct(3);
+          SFX.bad();
+          if(!alive){
+            G.locked=true;
+            feedback('生命用完了','bad');
+            setTimeout(gameOver,1000);
+            return;
+          }
+          feedback('配错了，再想想 −3 分 1 生命', 'bad', 1400);
+        }
+      }
+    });
+    return b;
+  }
+  left.forEach(function(e){ colL.appendChild(mkTile(e,'L')); });
+  right.forEach(function(e){ colR.appendChild(mkTile(e,'R')); });
+
+  q.autoMatch=function(){
+    var done={};
+    Array.prototype.forEach.call(colL.children,function(t){ if(t.classList.contains('done')) done[t.getAttribute('data-i')]=1; });
+    for(var k=0;k<pairs.length;k++){
+      if(!done[String(k)]){
+        Array.prototype.forEach.call(colL.children,function(t){
+          if(t.getAttribute('data-i')===String(k)){ t.classList.add('done'); }
+        });
+        Array.prototype.forEach.call(colR.children,function(t){
+          if(t.getAttribute('data-i')===String(k)){ t.classList.add('done'); }
+        });
+        q.matched++;
+        break;
+      }
+    }
+    if(q.matched>=q.pairs.length) resolve(true,0);
+  };
+}
+
+/* 抽签袋：一局之内每个词条只考一次，考过的先不放回。
+   分两个袋子：可拼写的（单词、短短语）和非可拼写的（句子、长短语）。
+   拼写题从「可拼袋」取；可拼袋取完了，就改出选择题去考剩下的句子。 */
+var BAG_SPELL=[], BAG_OTHER=[];
+function canSpellItem(it){
+  return /^[A-Za-z][A-Za-z' -]*$/.test(it.en) && it.en.length>=3 && it.en.length<=14;
+}
+function bagReset(){
+  BAG_SPELL = shuffle((G.items||[]).filter(canSpellItem).slice());
+  BAG_OTHER = shuffle((G.items||[]).filter(function(it){ return !canSpellItem(it); }).slice());
+}
+function bagTake(pred){
+  var pool = pred ? BAG_SPELL : BAG_OTHER;
+  if(pool.length) return pool.shift();
+  return null;
+}
+
+/* 抽题顺序：① 错题优先（75%）② 这一局还没考过的 ③ 都考过了就重洗。
+   前 3 关是认词阶段，选择题优先抽单词（有图可看）；第 4 关起才轮到句子。 */
+function pickWeighted(pool, wantSpell){
+  if(!pool || !pool.length) return null;
+  var retry=G.retry||{};
+  var hot=pool.filter(function(it){ return retry[it.en]>0; });
+  if(hot.length && Math.random()<0.75){
+    var total=0, acc=[];
+    hot.forEach(function(it){ total+=retry[it.en]; acc.push(total); });
+    var r=Math.random()*total;
+    for(var i=0;i<acc.length;i++){ if(r<=acc[i]) return hot[i]; }
+    return hot[hot.length-1];
+  }
+  if(wantSpell){
+    if(BAG_SPELL.length) return BAG_SPELL.shift();
+    return null;      // 告诉调用方：可拼的都考完了，这一题改成选择题
+  }
+  var early = (G.level||1) <= 3;
+  var first = early ? BAG_SPELL : BAG_OTHER;
+  var second = early ? BAG_OTHER : BAG_SPELL;
+  var it = first.length ? first.shift() : (second.length ? second.shift() : null);
+  if(it) return it;
+  bagReset();         // 全部考过一遍，重新洗牌开第二轮
+  first = early ? BAG_SPELL : BAG_OTHER;
+  second = early ? BAG_OTHER : BAG_SPELL;
+  it = first.length ? first.shift() : (second.length ? second.shift() : null);
+  return it || sample(pool,1)[0];
+}
+/* 错题要连对几次才算掌握：一般 2 次，错过 3 次以上的要 3 次 */
+function needOk(it){
+  var w=(G.retry && G.retry[it.en]) || 0;
+  return w>=3 ? 3 : 2;
+}
+function markWrongWord(it){
+  if(!it || !it.en) return;
+  if(!G.retry) G.retry={};
+  if(!G.retryOk) G.retryOk={};
+  G.retry[it.en]=(G.retry[it.en]||0)+1;
+  G.retryOk[it.en]=0;              // 错了，连对计数清零
+}
+/* 答对一次不够：要连对到 needOk 才把它移出错题池。
+   返回 {left:n} 表示还差几次，{cleared:true} 表示真掌握，null 表示这词本来就不在错题池。 */
+function noteRightWord(it, q){
+  if(!it || !it.en) return null;
+  if(!G.retry || !(G.retry[it.en]>0)) return null;
+  if(!G.retryOk) G.retryOk={};
+  if(q && q.hadMistake){            // 这一题中途拼错过，不算连对
+    G.retryOk[it.en]=0;
+    return {left:needOk(it), reset:true};
+  }
+  G.retryOk[it.en]=(G.retryOk[it.en]||0)+1;
+  var need=needOk(it);
+  if(G.retryOk[it.en]>=need){
+    delete G.retry[it.en];
+    delete G.retryOk[it.en];
+    return {cleared:true};
+  }
+  return {left:need-G.retryOk[it.en]};
+}
+function clearWrongWord(it){
+  if(!it || !G.retry) return;
+  delete G.retry[it.en];
+  if(G.retryOk) delete G.retryOk[it.en];
+}
+function retryCount(){
+  var n=0;
+  for(var k in (G.retry||{})){ if(G.retry[k]>0) n++; }
+  return n;
+}
+
+/* --- 句子填空：整句摆出来，只挖关键词里的字母 --- */
+function renderSFill(q,prompt,stage){
+  var pool=G.items.filter(function(it){ return !canSpellItem(it); });
+  if(!pool.length){ G.q.mode='c2e'; return renderChoice(q,prompt,stage,'c2e'); }
+  var item=pickWeighted(pool,false);
+  if(!item){ G.q.mode='c2e'; return renderChoice(q,prompt,stage,'c2e'); }
+  // 句子池用完了会退到单词，单词不该出句子填空（等于又考一遍拼写）
+  if(String(item.en).indexOf(' ')<0){ G.q.mode='c2e'; return renderChoice(q,prompt,stage,'c2e'); }
+
+  var keys=keyWordsOf(item.en);
+  if(!keys.length){ G.q.mode='c2e'; return renderChoice(q,prompt,stage,'c2e'); }
+
+  var lv=G.level||1;
+  var want = lv>=7 ? Math.ceil(keys.length*2/3) : (lv>=6 ? 2 : 1);
+  want = Math.max(1, Math.min(want, keys.length, 3));
+  // 越长的词越像实词，优先挖掉
+  var chosen = keys.slice().sort(function(a,b){ return b.length-a.length; }).slice(0,want);
+
+  q.item=item; q.sentence=item.en; q.keys=chosen;
+
+  prompt.innerHTML='<div class="zh">'+esc(item.zh)+'</div>'+
+    '<div class="tip">把句子里缺的 '+chosen.length+' 个词填上</div>';
+
+  var tokens=String(item.en).split(' ');
+  var slots=document.createElement('div'); slots.className='slots sentence';
+  var needLetters=[];
+
+  tokens.forEach(function(tok, ti){
+    if(ti>0){
+      var gap=document.createElement('div'); gap.className='gap'; slots.appendChild(gap);
+    }
+    var m=tok.match(/^([A-Za-z][A-Za-z'’\-]*)(.*)$/);
+    if(!m){
+      var p0=document.createElement('div'); p0.className='tok plain'; p0.textContent=tok;
+      slots.appendChild(p0); return;
+    }
+    var wordPart=m[1], tail=m[2];
+    if(chosen.indexOf(wordPart)<0){
+      var p1=document.createElement('div'); p1.className='tok plain'; p1.textContent=wordPart;
+      slots.appendChild(p1);
+    }else{
+      // 整个词包一层，避免几个字母格被拆到两行去
+      var bw=document.createElement('div'); bw.className='tok blank-word';
+      Array.prototype.forEach.call(wordPart, function(ch, ci){
+        var d=document.createElement('div');
+        if(!/[A-Za-z]/.test(ch)){
+          d.className='slot fixed'; d.textContent=ch; bw.appendChild(d); return;
+        }
+        d.className='slot';
+        d.setAttribute('data-blank','b'+ti+'_'+ci);
+        d.setAttribute('data-letter', ch.toLowerCase());
+        needLetters.push(ch.toLowerCase());
+        bw.appendChild(d);
+      });
+      slots.appendChild(bw);
+    }
+    if(tail){
+      var p2=document.createElement('div'); p2.className='tok punct'; p2.textContent=tail;
+      slots.appendChild(p2);
+    }
+  });
+  stage.appendChild(slots);
+
+  var alphabet='abcdefghijklmnopqrstuvwxyz'.split('');
+  var decoys=sample(alphabet.filter(function(c){ return needLetters.indexOf(c)<0; }), 3);
+  var bank=shuffle(needLetters.concat(decoys));
+
+  var wrap=document.createElement('div'); wrap.className='letters'; wrap.id='letterBank';
+  var openSlots=function(){
+    return Array.prototype.slice.call(slots.querySelectorAll('[data-blank]')).filter(function(s){
+      return !s.classList.contains('filled');
+    });
+  };
+  bank.forEach(function(ch){
+    var b=document.createElement('button');
+    b.className='letter'; b.textContent=ch;
+    b.addEventListener('click',function(){
+      if(G.locked || b.classList.contains('used')) return;
+      SFX.tap();
+      var hit=openSlots().filter(function(s){
+        return s.getAttribute('data-letter')===ch;
+      })[0];
+      if(hit){
+        hit.textContent=ch;
+        hit.classList.add('filled');
+        b.classList.add('used');
+        beep(900,0.08,'sine',0.07);
+        if(openSlots().length===0){
+          Array.prototype.forEach.call(document.querySelectorAll('.letter'),function(x){ x.classList.add('used'); });
+          resolve(true,12);
+        }
+      }else{
+        b.classList.add('shake');
+        setTimeout(function(){ b.classList.remove('shake'); },420);
+        G.wrong++;
+        q.hadMistake=true;
+        markWrongWord(item);
+        var alive=deduct(3);
+        SFX.bad();
+        if(!alive){
+          G.locked=true;
+          feedback('生命用完了','bad');
+          setTimeout(gameOver,1000);
+          return;
+        }
+        feedback('这个字母用不上 −3 分 1 生命','bad',1300);
+      }
+    });
+    wrap.appendChild(b);
+  });
+  stage.appendChild(wrap);
+
+  q.hint=function(){
+    var fill=openSlots()[0];
+    if(!fill) return false;
+    var need=fill.getAttribute('data-letter');
+    fill.textContent=need;
+    fill.classList.add('filled');
+    var b=Array.prototype.slice.call(wrap.children).filter(function(x){
+      return x.textContent===need && !x.classList.contains('used');
+    })[0];
+    if(b) b.classList.add('used');
+    if(openSlots().length===0) resolve(true,6);
+    return true;
+  };
+
+  // 句子题不自动念整句 —— 念出来就等于把答案给了，答完再播
+  attachPicture(q);
+}
+
+/* --- 单选（翻译 / 听音） --- */
+function renderChoice(q,prompt,stage,mode){
+  var pool=G.items;
+  var item=pickWeighted(pool);
+  q.item=item;
+  var others=pickDistractors(item,'en',3,pool);
+  while(others.length<3 && pool.length>others.length+1){
+    var extra=sample(pool,1)[0];
+    if(extra.en!==item.en && !others.some(function(x){return x.en===extra.en;})) others.push(extra);
+  }
+
+  if(mode==='c2e'){
+    prompt.innerHTML='<div class="zh">'+esc(item.zh)+'</div><div class="tip">选出正确的英文</div>';
+  }else if(mode==='e2c'){
+    prompt.innerHTML='<div class="big">'+esc(item.en)+'</div><div class="tip">选出正确的中文</div>';
+    TTS.say(item.en);
+  }else{
+    prompt.innerHTML='<div class="big">听一听</div>'+
+      '<button class="speak-btn" id="bigSpeak">播放英文</button>'+
+      '<div class="tip">点出你听到的那个</div>';
+    TTS.say(item.en);
+  }
+
+  var opts, keyOf;
+  if(mode==='e2c'){
+    opts=shuffle([item].concat(others)); keyOf=function(x){return x.zh;};
+  }else{
+    opts=shuffle([item].concat(others)); keyOf=function(x){return x.en;};
+  }
+
+  var box=document.createElement('div'); box.className='tiles';
+  opts.forEach(function(o,idx){
+    var b=document.createElement('button');
+    b.className='tile'; b.textContent=keyOf(o);
+    b.setAttribute('data-idx',idx);
+    b.addEventListener('click',function(){
+      if(G.locked) return;
+      SFX.tap();
+      if(o.en===item.en){
+        b.classList.add('correct');
+        lockAll(box);
+        resolve(true,10);
+      }else{
+        b.classList.add('wrong');
+        b.classList.add('lock');
+        lockAll(box);
+        markCorrect(box,item,mode);
+        resolve(false,0);
+      }
+    });
+    box.appendChild(b);
+  });
+  stage.appendChild(box);
+
+  if(mode==='listen'){
+    var bs=$('bigSpeak');
+    if(bs) bs.addEventListener('click',function(){ TTS.say(item.en); });
+  }
+
+  attachPicture(q);
+
+  q.hint=function(){
+    // 排除一个错误选项
+    var wrongs=Array.prototype.slice.call(box.children).filter(function(b){
+      var idx=parseInt(b.getAttribute('data-idx'),10);
+      return opts[idx].en!==item.en && !b.classList.contains('dim');
+    });
+    if(wrongs.length){ wrongs[0].classList.add('dim'); return true; }
+    return false;
+  };
+}
+
+function markCorrect(box,item,mode){
+  Array.prototype.forEach.call(box.children,function(b){
+    var idx=parseInt(b.getAttribute('data-idx'),10);
+    var o=box.__opts ? box.__opts[idx] : null;
+    if(b.textContent===item.en || b.textContent===item.zh) b.classList.add('correct');
+  });
+}
+function lockAll(box){
+  Array.prototype.forEach.call(box.children,function(b){ b.classList.add('lock'); });
+}
+
+/* --- 补全单词 --- */
+function renderSpell(q,prompt,stage){
+  var pool=spellable(G.items);
+  if(pool.length<1){ G.q.mode='c2e'; return renderChoice(q,prompt,stage,'c2e'); }
+  var item=pickWeighted(pool, true);
+  // 可拼写的都考过一遍了：这一题改成选择题，把还没考的句子/长短语补上
+  if(!item){ G.q.mode='c2e'; return renderChoice(q,prompt,stage,'c2e'); }
+  q.item=item;
+  var word=item.en;
+  var letters=word.split('');
+  var isLetter=function(ch){ return /[A-Za-z]/.test(ch); };
+
+  /* 只有字母能当空格子。词里的真空格（短语 "play football"）、连字符、撇号
+     一律按固定字符显示 —— 老版本把空格也排成一个待填格，可字母块里根本没有空格，
+     这一格永远填不上，题就卡死了。 */
+  var letterPos=[];
+  letters.forEach(function(ch,i){ if(isLetter(ch)) letterPos.push(i); });
+
+  var blankCount = blankCountFor(word, G.level||1);
+  q.blankCount = blankCount;
+  var idxs=sample(letterPos, blankCount).sort(function(a,b){return a-b;});
+  q.blanks=idxs;
+
+  prompt.innerHTML='<div class="zh">'+esc(item.zh)+'</div><div class="tip">把缺的字母填进去</div>';
+
+  var slots=document.createElement('div'); slots.className='slots';
+  letters.forEach(function(ch,i){
+    if(ch===' '){
+      // 真空格：给一段间隔，不画底边、不占填空
+      var gap=document.createElement('div');
+      gap.className='gap';
+      slots.appendChild(gap);
+      return;
+    }
+    var d=document.createElement('div');
+    if(!isLetter(ch)){
+      // 连字符 / 撇号：原样显示，不可填
+      d.className='slot fixed';
+      d.textContent=ch;
+      slots.appendChild(d);
+      return;
+    }
+    var blank = idxs.indexOf(i)>=0;
+    d.className='slot'+(blank?'':' filled');
+    d.textContent=blank?'':ch;
+    if(blank) d.setAttribute('data-blank',i);
+    slots.appendChild(d);
+  });
+  stage.appendChild(slots);
+
+  // 字母块：缺的字母 + 3 个干扰
+  var need=idxs.map(function(i){ return letters[i].toLowerCase(); });
+  var alphabet='abcdefghijklmnopqrstuvwxyz'.split('');
+  var decoys=sample(alphabet.filter(function(c){ return need.indexOf(c)<0; }), 3);
+  var bank=shuffle(need.concat(decoys));
+
+  var wrap=document.createElement('div'); wrap.className='letters'; wrap.id='letterBank';
+  var openSlots=function(){
+    return Array.prototype.slice.call(slots.children).filter(function(s){
+      return s.getAttribute('data-blank')!=null && !s.classList.contains('filled');
+    });
+  };
+  bank.forEach(function(ch){
+    var b=document.createElement('button');
+    b.className='letter'; b.textContent=ch;
+    b.addEventListener('click',function(){
+      if(G.locked || b.classList.contains('used')) return;
+      SFX.tap();
+      /* 先找「这个字母能填上的空位」，不是死板地只认第一个空位。
+         否则孩子先点后面那个字母（比如 donkey 先点 y）会被判错，
+         还会把 y 永久灰掉 —— 那道题就永远填不完了。 */
+      var hit=openSlots().filter(function(s){
+        var pos=parseInt(s.getAttribute('data-blank'),10);
+        return letters[pos].toLowerCase()===ch;
+      }).sort(function(a,b2){
+        return parseInt(a.getAttribute('data-blank'),10)-parseInt(b2.getAttribute('data-blank'),10);
+      })[0];
+
+      if(hit){
+        hit.textContent=ch;
+        hit.classList.add('filled');
+        b.classList.add('used');
+        beep(900,0.08,'sine',0.07);
+        if(openSlots().length===0){
+          Array.prototype.forEach.call(document.querySelectorAll('.letter'),function(x){ x.classList.add('used'); });
+          resolve(true,12);
+        }
+      }else{
+        /* 点错：只抖动 + 扣分扣命，字母块不禁用。
+           干扰字母本来就用不上，禁了没意义；万一它是重复字母的另一份，
+           禁掉反而会把题做死。 */
+        b.classList.add('shake');
+        setTimeout(function(){ b.classList.remove('shake'); },420);
+        G.wrong++;
+        q.hadMistake=true;        // 这一题拼错过，后面即使填完也留着再练
+        markWrongWord(item);
+        var alive=deduct(3);
+        SFX.bad();
+        if(!alive){
+          G.locked=true;
+          feedback('生命用完了','bad');
+          setTimeout(gameOver,1000);
+          return;
+        }
+        feedback('这个字母用不上 −3 分 1 生命', 'bad', 1300);
+      }
+    });
+    wrap.appendChild(b);
+  });
+  stage.appendChild(wrap);
+
+  // 补全单词也要播报：先把整个词念一遍，再让小孩听音补字母
+  setTimeout(function(){ if(!G.locked && G.q===q) TTS.say(item.en); }, 320);
+
+  attachPicture(q);
+
+  q.hint=function(){
+    var fill=Array.prototype.slice.call(slots.children).filter(function(s){
+      return s.getAttribute('data-blank')!=null && !s.classList.contains('filled');
+    })[0];
+    if(!fill) return false;
+    var pos=parseInt(fill.getAttribute('data-blank'),10);
+    fill.textContent=letters[pos].toLowerCase();
+    fill.classList.add('filled');
+    var b=Array.prototype.slice.call(wrap.children).filter(function(x){
+      return x.textContent===letters[pos].toLowerCase() && !x.classList.contains('used');
+    })[0];
+    if(b) b.classList.add('used');
+    var left=Array.prototype.slice.call(slots.children).filter(function(s){
+      return s.getAttribute('data-blank')!=null && !s.classList.contains('filled');
+    });
+    if(left.length===0) resolve(true,6);
+    return true;
+  };
+}
+
+/* =========================================================
+   9. 判分
+   ========================================================= */
+function feedback(text,cls,ms){
+  var f=$('feedback');
+  f.textContent=text; f.className='feedback '+(cls||'');
+  if(ms) setTimeout(function(){ if(f.textContent===text){ f.textContent=''; f.className='feedback'; } },ms);
+}
+function floatText(t){
+  var d=document.createElement('div');
+  d.className='float'; d.textContent=t;
+  $('stage').appendChild(d);
+  setTimeout(function(){ d.remove(); },900);
+}
+function penalty(points, loseHeart){
+  G.score=G.score-points;   // 不设下限：负分继续往下扣，不能被钳回 0
+  G.combo=0;
+  if(loseHeart!==false) G.hearts--;
+  paintHUD();
+}
+/* 扣分 + 扣命，返回「还有命吗」。连线/拼写这类多步题用它，避免重复扣命 */
+function deduct(points){
+  G.score=G.score-points;   // 同上，允许扣成任意负分
+  G.combo=0;
+  G.hearts--;
+  paintHUD();
+  return G.hearts>0;
+}
+
+function resolve(correct, pts){
+  if(G.locked) return;
+  G.locked=true;
+  var q=G.q;
+
+  if(correct){
+    G.right++;
+    // 错题要连对够次数才算掌握，对一次不放行
+    var rr=noteRightWord(q && q.item, q);
+    if(pts>0){
+      G.combo++;
+      G.maxCombo=Math.max(G.maxCombo,G.combo);
+      var bonus=Math.floor(G.combo/3)*5;
+      var gain=pts+bonus;
+      G.score+=gain;
+      SFX.ok();
+      floatText('+'+gain+(bonus?' 连对':''));
+      var msg='答对了 +'+gain;
+      if(rr && rr.left) msg+=' · 错题再对 '+rr.left+' 次就掌握';
+      else if(rr && rr.cleared) msg+=' · 这个错词掌握啦';
+      feedback(msg,'ok');
+    }else{
+      feedback('答对了','ok');
+    }
+    paintHUD();
+    afterAnswer(q, true);
+  }else{
+    G.wrong++;
+    markWrongWord(q && q.item);
+    var alive=deduct(5);
+    SFX.bad();
+    if(!alive){
+      feedback('生命用完了','bad');
+      setTimeout(gameOver, 1000);
+      return;
+    }
+    feedback('答错了 −5 分 1 生命','bad');
+    afterAnswer(q, false);
+  }
+}
+
+/* 答完题后的收尾：先把这道题的英文念一遍，再进下一题。
+   连线题每题都念过了，只在本轮配完时念最后一对，避免一直念。
+   声音长度决定停顿：短词 1.3 秒，长句子最多 4 秒。 */
+function afterAnswer(q, correct){
+  var text='';
+  if(q && q.item) text=q.item.en;
+  else if(q && q.mode==='match' && q.lastPairEn) text=q.lastPairEn;
+
+  // 先让音效（答对/答错提示音）过去，避免和语音抢音频输出
+  setTimeout(function(){
+    if(text){
+      TTS.stop();                 // 掐掉题目开头那遍（可能在播），从头清清楚楚再念一遍
+      TTS.say(text, null, true);  // force：跳过去重，保证这一遍一定播
+    }
+    var wait = text
+      ? Math.max(1300, Math.min(4200, 800 + text.length*95))
+      : 850;
+    setTimeout(function(){ nextQuestion(); }, wait);
+  }, 200);
+}
+
+function nextQuestion(){
+  G.qi++;
+  if(G.qi>=G.queue.length){ levelUp(); return; }
+  renderQuestion();
+}
+
+/* =========================================================
+   10. 关卡流转
+   ========================================================= */
+function startGame(){
+  G.level=1; G.score=0; G.combo=0; G.maxCombo=0; G.right=0; G.wrong=0;
+  G.hintCount=0;              // 提示扣分阶梯：新开一局才清零，一局内一路累加
+  G.retry={};
+  G.retryOk={};
+  bagReset();
+  G.heartsMax=G.settings.hearts; G.hearts=G.settings.hearts;
+  beginLevel();
+}
+function beginLevel(){
+  G.levelStartScore=G.score;
+  G.queue=planLevel(G.level);
+  G.qi=0;
+  show('game');
+  paintHUD();
+  renderQuestion();
+}
+function levelUp(){
+  TTS.stop();
+  if(G.level>=MAX_LEVEL){
+    if(G.score>G.best){ G.best=G.score; save(); }
+    $('clearStats').innerHTML=
+      stat('总分',G.score)+stat('总题量',answeredCount())+stat('正确率',rateText())+
+      stat('答对',G.right)+stat('答错',G.wrong)+stat('最高分',G.best);
+    $('clearSub').textContent=MAX_LEVEL+' 关全过，共答对 '+G.right+' 题';
+    SFX.level();
+    show('clear');
+    return;
+  }
+  if(G.score>G.best){ G.best=G.score; save(); }
+  var gained=G.score-G.levelStartScore;
+  $('luTitle').textContent='第 '+G.level+' 关通过';
+  var hint = G.level>=5 ? '下一关拼写更多、要填的空更多' : '下一关会加入新题型';
+  $('luSub').textContent='本关得分 '+gained+'，'+hint;
+  $('luStats').innerHTML=
+    stat('本关得分',gained)+stat('总分',G.score)+stat('总题量',answeredCount())+
+    stat('正确率',rateText())+stat('答错',G.wrong)+stat('剩余生命',G.hearts);
+  G.hearts=clamp(G.hearts+1,0,G.heartsMax);
+  SFX.level();
+  show('levelup');
+}
+function gameOver(){
+  TTS.stop();
+  if(G.score>G.best){ G.best=G.score; save(); }
+  $('overSub').textContent='第 '+G.level+' 关生命用完了';
+  $('overStats').innerHTML=
+    stat('得分',G.score)+stat('总题量',answeredCount())+stat('正确率',rateText())+
+    stat('答对',G.right)+stat('答错',G.wrong)+stat('闯到',G.level+' 关');
+  SFX.over();
+  show('over');
+}
+function stat(k,v){
+  return '<div class="stat"><b>'+esc(String(v))+'</b><span>'+esc(k)+'</span></div>';
+}
+
+/* =========================================================
+   11. 首页交互
+   ========================================================= */
+function setItems(items, note){
+  if(!items || !items.length){
+    setStatus('没有解析出任何词条，检查一下每行是不是「英文, 中文」','bad');
+    return;
+  }
+  G.items=items;
+  bagReset();          // 换题库了，抽签袋重新洗
+  save();
+  paintHome();
+  setStatus(note||('已载入 '+items.length+' 条'),'ok');
+}
+function setStatus(msg,cls){
+  var s=$('importStatus');
+  s.textContent=msg;
+  s.className='status '+(cls||'');
+}
+function importText(raw, fromName){
+  var r=parseText(raw);
+  var msg='';
+  if(fromName) msg+='文件：'+fromName+'\n';
+  msg+='识别 '+r.items.length+' 条'+(r.bad.length?('，跳过 '+r.bad.length+' 行'):'');
+  if(r.bad.length){
+    msg+='\n跳过的行（前 3 条）：'+r.bad.slice(0,3).join(' / ');
+  }
+  if(!r.items.length){ setStatus(msg,'bad'); return; }
+  setItems(r.items, msg);
+}
+
+function readFile(file){
+  var reader=new FileReader();
+  reader.onload=function(){ importText(String(reader.result||''), file.name); };
+  reader.onerror=function(){ setStatus('读文件失败','bad'); };
+  reader.readAsText(file,'UTF-8');
+}
+
+/* 选文件夹：把里面的题库文本全部读进来（去重合并），图片按文件名建索引 */
+function loadFolder(files){
+  var texts=[], imgs=[];
+  (files||[]).forEach(function(f){
+    var name=f.name||'';
+    var isImg=/^image\//.test(f.type||'') || /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(name);
+    if(isImg){ imgs.push(f); return; }
+    if(/\.(txt|csv|md)$/i.test(name)) texts.push(f);
+  });
+
+  var addedImg=addImageFiles(imgs);
+
+  if(!texts.length){
+    setStatus('这个文件夹里没找到 txt 题库'+
+      (addedImg?('，只认了 '+addedImg+' 张图片'):'')+
+      '\n图片要跟题库放同一个文件夹，名字用单词本身（bull.png）','bad');
+    return;
+  }
+
+  var pending=texts.length, all=[], names=[], badTotal=0;
+  var finish=function(){
+    var seen={}, out=[];
+    all.forEach(function(it){
+      var k=(it.en+'|'+it.zh).toLowerCase();
+      if(!seen[k]){ seen[k]=1; out.push(it); }
+    });
+    if(!out.length){ setStatus('文件夹里有 '+texts.length+' 个文本文件，但一条都没解析出来','bad'); return; }
+    var msg='文件夹：读了 '+texts.length+' 个题库文件（'+names.join('、')+'）→ '+out.length+' 条'
+          + '；图片 '+IMG.count+' 张'
+          + (badTotal?('，跳过 '+badTotal+' 行'):'');
+    setItems(out, msg);
+  };
+  texts.forEach(function(f){
+    var r=new FileReader();
+    r.onload=function(){
+      var res=parseText(String(r.result||''));
+      all=all.concat(res.items);
+      badTotal+=res.bad.length;
+      names.push(f.name);
+      if(--pending===0) finish();
+    };
+    r.onerror=function(){ if(--pending===0) finish(); };
+    r.readAsText(f,'UTF-8');
+  });
+}
+
+function bindHome(){
+  $('btnStart').addEventListener('click',function(){
+    ac();
+    TTS.warmup();
+    if(!G.items.length){ setStatus('先去下面导入或者点「用内置题库」','bad'); return; }
+    startGame();
+  });
+  // 任何一次点击都顺手把语音管线预热，省得第一题首音发闷
+  document.addEventListener('click', function once(){ TTS.warmup(); }, {once:true});
+
+  // 选文件夹：txt 题库和图片一次性拿进来
+  $('btnPickFolder').addEventListener('click',function(){ $('folderInput').click(); });
+  $('folderInput').addEventListener('change',function(e){
+    var files=Array.prototype.slice.call(e.target.files||[]);
+    e.target.value='';
+    if(files.length) loadFolder(files);
+  });
+  $('btnPickTxt').addEventListener('click',function(){ $('fileInput').click(); });
+  $('btnPickImg').addEventListener('click',function(){ $('imgInput').click(); });
+  $('imgInput').addEventListener('change',function(e){
+    var files=Array.prototype.slice.call(e.target.files||[]);
+    e.target.value='';
+    var n=addImageFiles(files);
+    setStatus('加了 '+n+' 张图片，当前共 '+IMG.count+' 张'+(IMG.count?'':'（图片要和题库同文件夹、名字叫单词.png）'), n?'ok':'bad');
+  });
+
+  $('dropZone').addEventListener('click',function(){ $('folderInput').click(); });
+  $('fileInput').addEventListener('change',function(e){
+    var f=e.target.files && e.target.files[0];
+    if(f) readFile(f);
+    e.target.value='';
+  });
+  ['dragenter','dragover'].forEach(function(ev){
+    $('dropZone').addEventListener(ev,function(e){ e.preventDefault(); $('dropZone').classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    $('dropZone').addEventListener(ev,function(e){ e.preventDefault(); $('dropZone').classList.remove('over'); });
+  });
+  $('dropZone').addEventListener('drop',function(e){
+    var files=e.dataTransfer && e.dataTransfer.files;
+    if(!files || !files.length) return;
+    loadFolder(Array.prototype.slice.call(files));
+  });
+
+  $('picSel').addEventListener('change',function(e){
+    G.settings.showPic=e.target.value; save();
+  });
+
+  // 音色：选完自动试听一遍，也可以手动点「试听」
+  $('voiceSel').addEventListener('change',function(e){
+    G.settings.voiceURI=e.target.value||'';
+    TTS.voiceURI=G.settings.voiceURI;
+    TTS.pick(); save(); previewVoice();
+  });
+  $('btnVoiceTest').addEventListener('click',function(){ ac(); previewVoice(); });
+
+  $('btnImportPaste').addEventListener('click',function(){
+    importText($('pasteBox').value, null);
+  });
+  $('btnUseDefault').addEventListener('click',function(){
+    var r=parseText(DEFAULT_RAW);
+    setItems(r.items,'已载入内置题库 '+r.items.length+' 条');
+  });
+
+  $('rateRange').addEventListener('input',function(e){
+    G.settings.rate=parseFloat(e.target.value);
+    TTS.rate=G.settings.rate;
+    $('rateVal').textContent=G.settings.rate.toFixed(2);
+    save();
+  });
+  $('perLevel').addEventListener('change',function(e){
+    G.settings.perLevel=parseInt(e.target.value,10)||15; save();
+  });
+  $('heartsSel').addEventListener('change',function(e){
+    G.settings.hearts=parseInt(e.target.value,10)||5; save();
+  });
+}
+
+function bindGame(){
+  $('btnReplay').addEventListener('click',function(){
+    var q=G.q; if(!q) return;
+    if(q.item) TTS.say(q.item.en);
+    else if(q.pairs) TTS.say(q.pairs[0].en);
+  });
+
+  $('btnHint').addEventListener('click',function(){
+    var q=G.q; if(!q || G.locked) return;
+    var cost=hintCost(G.hintCount);
+    var ok=false;
+    if(q.mode==='match'){
+      if(q.autoMatch){ q.autoMatch(); ok=true; }
+    }else if(q.hint){
+      ok=q.hint();
+    }
+    if(ok){
+      q.hintUsed=true;
+      G.hintCount=(G.hintCount||0)+1;   // 整局累加，换题不重置
+      G.score=G.score-cost;             // 不设下限，分数不够就扣成负分
+      G.combo=0;
+      paintHUD();
+      paintHintBtn();
+      feedback('已用提示 −'+cost+' 分（再点 −'+hintCost(G.hintCount)+' 分）','bad',1600);
+    }else{
+      feedback('这题已经给不出更多提示了','bad',1200);
+    }
+  });
+
+  $('btnGiveUp').addEventListener('click',function(){
+    if(confirm('放弃本关？本关成绩会结束，算闯关失败。')){ gameOver(); }
+  });
+
+  $('btnNextLevel').addEventListener('click',function(){
+    G.level++;
+    beginLevel();
+  });
+  $('btnRetryLevel').addEventListener('click',function(){
+    G.score=G.levelStartScore;
+    G.hearts=G.heartsMax;
+    G.combo=0;
+    beginLevel();
+  });
+  $('btnBackHome').addEventListener('click',function(){ show('home'); });
+  $('btnRestartAll').addEventListener('click',function(){ startGame(); });
+
+  document.addEventListener('keydown',function(e){
+    if(G.screen!=='game' || G.locked) return;
+    var n=parseInt(e.key,10);
+    if(n>=1 && n<=4){
+      var box=$('stage');
+      var tiles=box.querySelectorAll('.tiles .tile');
+      if(tiles[n-1]) tiles[n-1].click();
+    }
+  });
+}
+
+/* =========================================================
+   12. 启动
+   ========================================================= */
+function init(){
+  TTS.init();
+  TTS.rate=G.settings.rate;
+  var had=load();
+  if(!had || !G.items.length){
+    var r=parseText(DEFAULT_RAW);
+    G.items=r.items;
+    save();
+  }
+  TTS.rate=G.settings.rate;
+  bindHome(); bindGame();
+  paintHome();
+  show('home');
+  // 测试/调试钩子
+  window.__APP={
+    G:G, TTS:TTS, parseText:parseText, startGame:startGame, show:show,
+    beginLevel:beginLevel, pickImageFor:pickImageFor, IMG:IMG,
+    blankCountFor:blankCountFor, pickWeighted:pickWeighted, retryCount:retryCount,
+    noteRightWord:noteRightWord, markWrongWord:markWrongWord, needOk:needOk,
+    bagReset:bagReset, bags:function(){ return {spell:BAG_SPELL.slice(), other:BAG_OTHER.slice()}; },
+    renderQuestion:renderQuestion, keyWordsOf:keyWordsOf,
+    fillVoices:fillVoices, previewVoice:previewVoice, LEVEL_TABLE:LEVEL_TABLE,
+    state:function(){
+      return {screen:G.screen, level:G.level, score:G.score, hearts:G.hearts,
+              combo:G.combo, qi:G.qi, queue:G.queue.length, items:G.items.length,
+              mode:(G.q&&G.q.mode)||null, locked:G.locked};
+    }
+  };
+}
+document.addEventListener('DOMContentLoaded',init);
+})();
+</script>
+</body>
+</html>
