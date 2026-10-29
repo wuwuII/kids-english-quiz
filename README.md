@@ -4,6 +4,8 @@
 
 **零依赖**：整个游戏就是一个 `index.html`，没有 CDN、没有字体文件、没有图片、没有音频，双击即用；发音用浏览器自带的语音合成（`speechSynthesis`）。
 
+**在线玩**：<https://wuwuii.github.io/kids-english-quiz/>
+
 ![首页](screenshots/home.png)
 
 ## 快速开始
